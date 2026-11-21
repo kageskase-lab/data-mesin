@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Area Data Mesin</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- PyScript: menjalankan Python langsung di browser -->
+<link rel="stylesheet" href="https://pyscript.net/releases/2024.11.1/core.css">
+<script type="module" src="https://pyscript.net/releases/2024.11.1/core.js"></script>
+
+<style>
+:root{
+  --bg:#e8ecef; --surface:#ffffff; --ink:#18262e; --muted:#5b6b75; --line:#cdd5da;
+  --accent:#0e6a77; --accent-ink:#ffffff; --danger:#b3261e;
+  --s-todo-bg:#e3e7ea; --s-todo-fg:#38464f;
+  --s-prog-bg:#fde9c0; --s-prog-fg:#7a4a00;
+  --s-done-bg:#cdeedd; --s-done-fg:#0d5a33;
+  --s-hold-bg:#f9d4d1; --s-hold-fg:#8a1d16;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#11191e; --surface:#192329; --ink:#e6edf0; --muted:#97a6af; --line:#2b3a42;
+    --accent:#3fb4c4; --accent-ink:#06242a; --danger:#ff8a80;
+    --s-todo-bg:#2a363d; --s-todo-fg:#c9d4da;
+    --s-prog-bg:#4a3708; --s-prog-fg:#ffd98a;
+    --s-done-bg:#12402a; --s-done-fg:#9be3bd;
+    --s-hold-bg:#4d1f1b; --s-hold-fg:#ffb4ab;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Barlow',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.5;min-height:100vh}
+h1,h2,h3{font-family:'Barlow Semi Condensed','Barlow',sans-serif;margin:0;line-height:1.15}
+.hidden{display:none !important}
+
+/* ---------- Halaman masuk ---------- */
+.auth-wrap{min-height:100vh;display:grid;grid-template-columns:1.1fr 1fr}
+.auth-brand{background:var(--accent);color:var(--accent-ink);padding:48px;display:flex;flex-direction:column;justify-content:flex-end;
+  background-image:repeating-linear-gradient(135deg,transparent 0 22px,rgba(255,255,255,.07) 22px 24px)}
+.auth-brand h1{font-size:clamp(2.6rem,6vw,4.6rem);font-weight:700;letter-spacing:-.01em}
+.auth-brand p{max-width:34ch;opacity:.9;margin:14px 0 0;font-size:1.05rem}
+.auth-panel{display:flex;align-items:center;justify-content:center;padding:32px}
+.auth-card{width:100%;max-width:380px}
+.tabs{display:flex;border-bottom:2px solid var(--line);margin-bottom:24px}
+.tab{flex:1;background:none;border:0;padding:12px 0;font:600 1.05rem 'Barlow Semi Condensed',sans-serif;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+
+/* ---------- Form & tombol ---------- */
+label{display:block;font-weight:600;font-size:.92rem;margin:0 0 6px}
+input,select{width:100%;padding:11px 12px;border:1.5px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink);font:inherit}
+input:focus,select:focus,button:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 45%,transparent);outline-offset:1px;border-color:var(--accent)}
+.field{margin-bottom:16px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 20px;border-radius:6px;border:1.5px solid var(--accent);background:var(--accent);color:var(--accent-ink);font:600 1rem 'Barlow',sans-serif;cursor:pointer}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn.danger{background:transparent;border-color:var(--danger);color:var(--danger)}
+.btn.small{padding:6px 12px;font-size:.9rem}
+.btn.block{width:100%}
+.note{min-height:1.4em;margin:14px 0 0;font-size:.95rem;font-weight:500}
+.note.err{color:var(--danger)} .note.ok{color:var(--s-done-fg)}
+
+/* ---------- Aplikasi ---------- */
+.topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.topbar h1{font-size:1.6rem;font-weight:700}
+.who{display:flex;align-items:center;gap:14px;color:var(--muted)}
+.who strong{color:var(--ink)}
+main{max-width:1100px;margin:0 auto;padding:28px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:24px;margin-bottom:24px}
+.panel h2{font-size:1.35rem;margin-bottom:16px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:end}
+.summary{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.chip{padding:5px 12px;border-radius:999px;font-weight:600;font-size:.9rem}
+.table-scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th{text-align:left;font:600 .95rem 'Barlow Semi Condensed',sans-serif;color:var(--muted);padding:10px 12px;border-bottom:2px solid var(--line)}
+td{padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+td.wsid{font-weight:600}
+td.act{white-space:nowrap;text-align:right}
+.badge{display:inline-block;padding:4px 11px;border-radius:999px;font-size:.88rem;font-weight:600}
+.s-todo{background:var(--s-todo-bg);color:var(--s-todo-fg)}
+.s-prog{background:var(--s-prog-bg);color:var(--s-prog-fg)}
+.s-done{background:var(--s-done-bg);color:var(--s-done-fg)}
+.s-hold{background:var(--s-hold-bg);color:var(--s-hold-fg)}
+.empty{text-align:center;color:var(--muted);padding:32px 12px}
+
+/* ---------- Dialog edit ---------- */
+.overlay{position:fixed;inset:0;background:rgba(10,20,26,.55);display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.dialog{background:var(--surface);border-radius:10px;padding:26px;width:100%;max-width:420px;border:1px solid var(--line)}
+.dialog h2{margin-bottom:4px}
+.dialog .sub{color:var(--muted);margin:0 0 18px}
+.dialog .row{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+
+@media (max-width:800px){
+  .auth-wrap{grid-template-columns:1fr}
+  .auth-brand{padding:32px 24px;min-height:200px}
+  .grid{grid-template-columns:1fr 1fr}
+  main{padding:16px}
+}
+@media (max-width:520px){ .grid{grid-template-columns:1fr} }
+</style>
+</head>
+
+<body>
+
+<!-- ================= HALAMAN MASUK / DAFTAR ================= -->
+<div id="view-auth" class="auth-wrap">
+  <section class="auth-brand">
+    <h1>Area Data Mesin</h1>
+    <p>Catat WSID, lokasi mesin, pengelola, dan pantau status pengerjaannya di satu tempat.</p>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="tabs" role="tablist">
+        <button class="tab" id="tab-login" role="tab" aria-selected="true" py-click="show_login">Masuk</button>
+        <button class="tab" id="tab-register" role="tab" aria-selected="false" py-click="show_register">Daftar</button>
+      </div>
+
+      <div id="form-login">
+        <div class="field"><label for="l-user">Username</label><input id="l-user" autocomplete="username"></div>
+        <div class="field"><label for="l-pass">Password</label><input id="l-pass" type="password" autocomplete="current-password"></div>
+        <button class="btn block" py-click="do_login">Masuk</button>
+      </div>
+
+      <div id="form-register" class="hidden">
+        <div class="field"><label for="r-user">Username baru</label><input id="r-user" autocomplete="username"></div>
+        <div class="field"><label for="r-pass">Password (minimal 6 karakter)</label><input id="r-pass" type="password" autocomplete="new-password"></div>
+        <div class="field"><label for="r-pass2">Ulangi password</label><input id="r-pass2" type="password" autocomplete="new-password"></div>
+        <button class="btn block" py-click="do_register">Buat akun</button>
+      </div>
+
+      <p id="auth-msg" class="note" role="status"></p>
+    </div>
+  </section>
+</div>
+
+<!-- ================= HALAMAN UTAMA ================= -->
+<div id="view-app" class="hidden">
+  <header class="topbar">
+    <h1>Area Data Mesin</h1>
+    <div class="who">
+      <span>Masuk sebagai <strong id="who-name"></strong></span>
+      <button class="btn ghost small" py-click="do_logout">Keluar</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>Input data mesin</h2>
+      <div class="grid">
+        <div><label for="f-wsid">WSID</label><input id="f-wsid" placeholder="mis. WS-00123"></div>
+        <div><label for="f-area">Area mesin</label><input id="f-area" placeholder="mis. Lantai 2 - Lobby"></div>
+        <div><label for="f-owner">Pengelola</label><input id="f-owner" placeholder="Nama pengelola"></div>
+        <div>
+          <label for="f-status">Status pengerjaan</label>
+          <select id="f-status">
+            <option>Belum dikerjakan</option>
+            <option>Sedang dikerjakan</option>
+            <option>Selesai</option>
+            <option>Tertunda</option>
+          </select>
+        </div>
+      </div>
+      <div style="margin-top:18px"><button class="btn" py-click="add_record">Simpan data</button></div>
+      <p id="app-msg" class="note" role="status"></p>
+    </section>
+
+    <section class="panel">
+      <h2>Daftar mesin</h2>
+      <div id="summary" class="summary"></div>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>WSID</th><th>Area mesin</th><th>Pengelola</th><th>Status pengerjaan</th><th></th></tr></thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- ================= DIALOG EDIT STATUS ================= -->
+<div id="edit-overlay" class="overlay hidden">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="edit-title">
+    <h2 id="edit-title">Ubah status pengerjaan</h2>
+    <p class="sub" id="edit-sub"></p>
+    <div class="field">
+      <label for="e-status">Status baru</label>
+      <select id="e-status">
+        <option>Belum dikerjakan</option>
+        <option>Sedang dikerjakan</option>
+        <option>Selesai</option>
+        <option>Tertunda</option>
+      </select>
+    </div>
+    <div class="row">
+      <button class="btn ghost" py-click="close_edit">Batal</button>
+      <button class="btn" py-click="save_edit">Simpan perubahan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= KODE PYTHON ================= -->
+<script type="py">
+import json
+import hashlib
+from pyscript import document, window
+from pyodide.ffi import create_proxy
+
+LS = window.localStorage
+SS = window.sessionStorage
+
+STATUS_CLASS = {
+    "Belum dikerjakan": "s-todo",
+    "Sedang dikerjakan": "s-prog",
+    "Selesai": "s-done",
+    "Tertunda": "s-hold",
+}
+
+editing_id = None
+
+
+# ---------- Utilitas ----------
+def el(i):
+    return document.getElementById(i)
+
+def load(key, default):
+    raw = LS.getItem(key)
+    return json.loads(raw) if raw else default
+
+def save(key, value):
+    LS.setItem(key, json.dumps(value))
+
+def hash_pw(pw):
+    return hashlib.sha256(pw.encode("utf-8")).hexdigest()
+
+def esc(text):
+    return (str(text).replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
+def set_msg(target, text, kind=""):
+    node = el(target)
+    node.textContent = text
+    node.className = "note " + kind
+
+
+# ---------- Pergantian tampilan ----------
+def show_login(event=None):
+    el("form-login").classList.remove("hidden")
+    el("form-register").classList.add("hidden")
+    el("tab-login").setAttribute("aria-selected", "true")
+    el("tab-register").setAttribute("aria-selected", "false")
+    set_msg("auth-msg", "")
+
+def show_register(event=None):
+    el("form-register").classList.remove("hidden")
+    el("form-login").classList.add("hidden")
+    el("tab-register").setAttribute("aria-selected", "true")
+    el("tab-login").setAttribute("aria-selected", "false")
+    set_msg("auth-msg", "")
+
+def enter_app(username):
+    el("view-auth").classList.add("hidden")
+    el("view-app").classList.remove("hidden")
+    el("who-name").textContent = username
+    render()
+
+def leave_app():
+    el("view-app").classList.add("hidden")
+    el("view-auth").classList.remove("hidden")
+
+
+# ---------- Pendaftaran & login ----------
+def do_register(event=None):
+    user = el("r-user").value.strip()
+    pw = el("r-pass").value
+    pw2 = el("r-pass2").value
+    users = load("adm_users", {})
+
+    if len(user) < 3:
+        return set_msg("auth-msg", "Username minimal 3 karakter.", "err")
+    if len(pw) < 6:
+        return set_msg("auth-msg", "Password minimal 6 karakter.", "err")
+    if pw != pw2:
+        return set_msg("auth-msg", "Kedua password tidak sama.", "err")
+    if user.lower() in users:
+        return set_msg("auth-msg", "Username sudah dipakai. Pilih username lain.", "err")
+
+    users[user.lower()] = {"name": user, "pw": hash_pw(pw)}
+    save("adm_users", users)
+    for i in ("r-user", "r-pass", "r-pass2"):
+        el(i).value = ""
+    show_login()
+    set_msg("auth-msg", "Akun berhasil dibuat. Silakan masuk.", "ok")
+
+def do_login(event=None):
+    user = el("l-user").value.strip()
+    pw = el("l-pass").value
+    users = load("adm_users", {})
+    rec = users.get(user.lower())
+
+    if not rec or rec["pw"] != hash_pw(pw):
+        return set_msg("auth-msg", "Username atau password salah.", "err")
+
+    SS.setItem("adm_session", rec["name"])
+    el("l-pass").value = ""
+    set_msg("auth-msg", "")
+    enter_app(rec["name"])
+
+def do_logout(event=None):
+    SS.removeItem("adm_session")
+    leave_app()
+    show_login()
+
+
+# ---------- Data mesin ----------
+def add_record(event=None):
+    wsid = el("f-wsid").value.strip()
+    area = el("f-area").value.strip()
+    owner = el("f-owner").value.strip()
+    status = el("f-status").value
+
+    if not (wsid and area and owner):
+        return set_msg("app-msg", "Isi WSID, Area mesin, dan Pengelola terlebih dahulu.", "err")
+
+    rows = load("adm_rows", [])
+    if any(r["wsid"].lower() == wsid.lower() for r in rows):
+        return set_msg("app-msg", "WSID " + wsid + " sudah ada di daftar.", "err")
+
+    next_id = max([r["id"] for r in rows], default=0) + 1
+    rows.append({"id": next_id, "wsid": wsid, "area": area, "owner": owner, "status": status})
+    save("adm_rows", rows)
+
+    for i in ("f-wsid", "f-area", "f-owner"):
+        el(i).value = ""
+    set_msg("app-msg", "Data " + wsid + " tersimpan.", "ok")
+    render()
+
+def render():
+    rows = load("adm_rows", [])
+    body = el("tbody")
+
+    if not rows:
+        body.innerHTML = '<tr><td colspan="5" class="empty">Belum ada data. Isi formulir di atas untuk menambah mesin pertama.</td></tr>'
+    else:
+        html = ""
+        for r in reversed(rows):
+            cls = STATUS_CLASS.get(r["status"], "s-todo")
+            html += (
+                "<tr>"
+                f'<td class="wsid">{esc(r["wsid"])}</td>'
+                f'<td>{esc(r["area"])}</td>'
+                f'<td>{esc(r["owner"])}</td>'
+                f'<td><span class="badge {cls}">{esc(r["status"])}</span></td>'
+                '<td class="act">'
+                f'<button class="btn ghost small" data-act="edit" data-id="{r["id"]}">Edit</button> '
+                f'<button class="btn danger small" data-act="del" data-id="{r["id"]}">Hapus</button>'
+                "</td></tr>"
+            )
+        body.innerHTML = html
+
+    counts = {}
+    for r in rows:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    chips = f'<span class="chip s-todo">Total: {len(rows)}</span>'
+    for name, cls in STATUS_CLASS.items():
+        if counts.get(name):
+            chips += f'<span class="chip {cls}">{name}: {counts[name]}</span>'
+    el("summary").innerHTML = chips
+
+
+# ---------- Edit status ----------
+def open_edit(rid):
+    global editing_id
+    rows = load("adm_rows", [])
+    rec = next((r for r in rows if r["id"] == rid), None)
+    if not rec:
+        return
+    editing_id = rid
+    el("edit-sub").textContent = rec["wsid"] + " - " + rec["area"]
+    el("e-status").value = rec["status"]
+    el("edit-overlay").classList.remove("hidden")
+
+def close_edit(event=None):
+    global editing_id
+    editing_id = None
+    el("edit-overlay").classList.add("hidden")
+
+def save_edit(event=None):
+    rows = load("adm_rows", [])
+    for r in rows:
+        if r["id"] == editing_id:
+            r["status"] = el("e-status").value
+    save("adm_rows", rows)
+    close_edit()
+    set_msg("app-msg", "Status pengerjaan diperbarui.", "ok")
+    render()
+
+def delete_record(rid):
+    rows = load("adm_rows", [])
+    rec = next((r for r in rows if r["id"] == rid), None)
+    if rec and window.confirm("Hapus data " + rec["wsid"] + "?"):
+        save("adm_rows", [r for r in rows if r["id"] != rid])
+        render()
+
+def on_table_click(event):
+    target = event.target
+    act = target.getAttribute("data-act")
+    if not act:
+        return
+    rid = int(target.getAttribute("data-id"))
+    if act == "edit":
+        open_edit(rid)
+    elif act == "del":
+        delete_record(rid)
+
+el("tbody").addEventListener("click", create_proxy(on_table_click))
+
+
+# ---------- Mulai ----------
+current = SS.getItem("adm_session")
+if current:
+    enter_app(current)
+</script>
+
+</body>
+</html>
